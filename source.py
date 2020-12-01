@@ -2,7 +2,7 @@
 # @author:
 
 import numpy as np
-from utils import dropoff_function, angle_phi
+from utils import dropoff_function, get_angle_phi
 
 
 class Source:
