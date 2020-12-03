@@ -167,7 +167,7 @@ class Agent:
             self.hidden_layer[i, 0] = relu(self.hidden_layer[i, 0])
 
         self.output_layer = np.dot(self.weights["Layer2"], self.hidden_layer) + self.weights["hidden_bias"]
-        #self.output_layer = softmax(self.output_layer)
+        self.output_layer = softmax(self.output_layer)
 
         '''
         print('Shape output layer after:', self.output_layer.shape)

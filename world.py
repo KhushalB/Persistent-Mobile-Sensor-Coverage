@@ -96,6 +96,41 @@ class Env:
             return True
         return True
 
+    def check_position_source(self, position, all_agents_only):
+        """
+        Check if the given position falls on the boundary or an obstacle
+        :param check_obstacle:
+        :param position:
+        :return:
+        """
+        agt_radius = self.obj_size['agent_radius']
+        src_radius = self.obj_size['source_radius']
+        env_border = self.obj_size['border_width']
+        # check if the position is out of the boundaries of the environment
+        if position[0] <= self.origin[0] + (env_border + agt_radius) or position[1] <= self.origin[1] + (
+                env_border + agt_radius) \
+                or position[0] >= self.width - (env_border + agt_radius) or position[1] >= self.length - (
+                env_border + agt_radius):
+            return False
+
+        # Check if the position falls on an obstacle or agent
+        try:
+            if self.obstacles is not None:
+                for obstacle in self.obstacles:
+                    if obstacle['range_width'][0] - agt_radius <= position[0] <= obstacle['range_width'][1] + agt_radius \
+                            and obstacle['range_length'][0] - agt_radius <= position[1] <= obstacle['range_length'][
+                        1] + agt_radius:
+                        return False
+
+            for agent in all_agents_only.values():
+                distance_to_agent = utils.euclidian_distance(position, agent.current_position)
+
+                if distance_to_agent <= src_radius + 2 * agt_radius:
+                    return False
+        except:
+            return True
+        return True
+
     def render(self, sources, agents, filename=''):
         fig = plt.figure()
         ax = fig.add_subplot(111, aspect='equal')
@@ -214,14 +249,14 @@ class AllAgents:
             vprime_source = {}
             c_source = {}
             for info_type in source.info_strength.keys():
-                #vprime_source[info_type] = source.info_strength[info_type] + self.compute_agents_coverage(
+                # vprime_source[info_type] = source.info_strength[info_type] + self.compute_agents_coverage(
                 vprime_source[info_type] = self.compute_agents_coverage(
                     source, info_type, agent_id
                 )
-                #c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
+                # c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
                 #                       source.info_strength[
                 #                           info_type]) * 100
-            #self.sources_coverage_only_me[source.id] = c_source
+            # self.sources_coverage_only_me[source.id] = c_source
             self.sources_coverage_only_me[source.id] = vprime_source
 
     def compute_source_coverage_without_agent_i(self, agent_id):
@@ -237,11 +272,11 @@ class AllAgents:
             vprime_source = {}
             c_source = {}
             for info_type in source.info_strength.keys():
-                #vprime_source[info_type] = source.info_strength[info_type] + self.compute_agents_coverage(
+                # vprime_source[info_type] = source.info_strength[info_type] + self.compute_agents_coverage(
                 vprime_source[info_type] = self.compute_agents_coverage(
                     source, info_type, agent_id
                 )
-                #c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
+                # c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
                 #                       source.info_strength[
                 #                           info_type]) * 100
             # self.sources_coverage_without_me[source.id] = c_source
@@ -355,7 +390,7 @@ class AllAgents:
             quadrants_agents = np.zeros((1, 4)).ravel()
             # sensing all sources in each quadrant
             quadrants_sources = np.zeros((1, 4)).ravel()
-            max_distance_to_other_agents = np.zeros((1, 4)).ravel() + 0.01 # added to avoid division by zero
+            max_distance_to_other_agents = np.zeros((1, 4)).ravel() + 0.01  # added to avoid division by zero
             for agent in self.agents.values():
                 if agent.id != target_agent.id:
                     distance_aj = utils.euclidian_distance(agent.current_position, target_agent.current_position) + 1
@@ -395,7 +430,7 @@ class AllAgents:
                             max_distance_to_other_agents[3] = distance_aj
             sensing_agents_quadrants[info_type] = np.divide(quadrants_agents, max_distance_to_other_agents)
 
-            max_distance_to_sources = np.zeros((1, 4)).ravel() + 0.01 # added to avoid division by zero
+            max_distance_to_sources = np.zeros((1, 4)).ravel() + 0.01  # added to avoid division by zero
             target_agent_info_efficiency = target_agent.info_efficiency[info_type]
             for source in self.sources.values():
                 distance_ij = utils.euclidian_distance(source.position, target_agent.current_position) + 1
@@ -412,48 +447,47 @@ class AllAgents:
                 # Quadrant 0
                 if source.position[0] < target_agent.current_position[0] and \
                         source.position[1] < target_agent.current_position[1]:
-                    #current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    current_src_update = target_agent_info_efficiency / neglog_likelihood
+                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
+                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
                     quadrants_sources[0] = quadrants_sources[0] + current_src_update
 
-                    ## Check if the value of the information type for agent i is greater than max
-                    #if distance_ij > max_distance_to_sources[0]:
-                    #    max_distance_to_sources[0] = distance_ij
+                    # Check if the value of the information type for agent i is greater than max
+                    if distance_ij > max_distance_to_sources[0]:
+                        max_distance_to_sources[0] = distance_ij
 
                 # Quadrant 1
                 elif source.position[0] >= target_agent.current_position[0] and \
                         source.position[1] < target_agent.current_position[1]:
-                    #current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    current_src_update = target_agent_info_efficiency / neglog_likelihood
+                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
+                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
                     quadrants_sources[1] = quadrants_sources[1] + current_src_update
 
-                    ## Check if the value of the information type for agent i is greater than max
-                    #if distance_ij > max_distance_to_sources[1]:
-                    #    max_distance_to_sources[1] = distance_ij
+                    # Check if the value of the information type for agent i is greater than max
+                    if distance_ij > max_distance_to_sources[1]:
+                        max_distance_to_sources[1] = distance_ij
 
                 # Quadrant 2
                 elif source.position[0] >= target_agent.current_position[0] and \
                         source.position[1] >= target_agent.current_position[1]:
-                    #current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    current_src_update = target_agent_info_efficiency / neglog_likelihood
+                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
+                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
                     quadrants_sources[2] = quadrants_sources[2] + current_src_update
 
-                    ## Check if the value of the information type for agent i is greater than max
-                    #if distance_ij > max_distance_to_sources[2]:
-                    #    max_distance_to_sources[2] = distance_ij
+                    # Check if the value of the information type for agent i is greater than max
+                    if distance_ij > max_distance_to_sources[2]:
+                        max_distance_to_sources[2] = distance_ij
 
                 # Quadrant 3
                 else:
-                    #current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    current_src_update = target_agent_info_efficiency / neglog_likelihood
+                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
+                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
                     quadrants_sources[3] = quadrants_sources[3] + current_src_update
 
-                    ## Check if the value of the information type for agent i is greater than max
-                    #if distance_ij > max_distance_to_sources[3]:
-                    #    max_distance_to_sources[3] = distance_ij
+                    # Check if the value of the information type for agent i is greater than max
+                    if distance_ij > max_distance_to_sources[3]:
+                        max_distance_to_sources[3] = distance_ij
 
-            #sensing_sources_quadrants[info_type] = np.divide(quadrants_sources, max_distance_to_sources)
-            sensing_sources_quadrants[info_type] = quadrants_sources
+            sensing_sources_quadrants[info_type] = np.divide(quadrants_sources, max_distance_to_sources)
 
         return sensing_agents_quadrants, sensing_sources_quadrants
 
@@ -487,7 +521,6 @@ class AllAgents:
                 return False
 
         return True
-
 
     '''
         def get_sensing_info(self, agent_id):

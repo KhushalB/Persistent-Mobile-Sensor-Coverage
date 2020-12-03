@@ -30,7 +30,7 @@ def get_parameters():
 
     # Neural Network Parameters
     parameters["n_inputs"] = 16
-    parameters["n_hnodes"] = 32
+    parameters["n_hnodes"] = 8
     parameters["n_outputs"] = 4
 
     # CCEA Parameters
@@ -38,7 +38,7 @@ def get_parameters():
     parameters["m_rate"] = 0.1
     parameters["m_prob"] = 0.1
     parameters["epsilon"] = 0.1
-    parameters["generations"] = 300
+    parameters["generations"] = 2000
     parameters["n_elites"] = 10
 
     # Training Parameters
@@ -77,7 +77,11 @@ if __name__ == "__main__":
     param, object_size = get_parameters()
 
     env = Env(param["env_width"], param["env_length"], object_size, obstacles)
-    all_agents = AllAgents(object_size, type_reward=rewards[0])
+
+    # **************************************************************************************************************
+    # ****** Change the type of reward in the line below to 0, 1 or 2 for global, difference and local fitness *****
+    # **************************************************************************************************************
+    all_agents = AllAgents(object_size, type_reward=rewards[1])
 
     # Position the source withing the environment
     init_source_pos = [[5, 25], [15, 75], [65, 85], [50, 50], [80, 20]]

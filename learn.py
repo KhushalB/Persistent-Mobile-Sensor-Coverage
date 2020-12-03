@@ -131,6 +131,10 @@ def learn_with_global_reward(env, parameters, all_agents):
                 if gen == (p["generations"] - 1):
                     env.render(all_agents.sources, all_agents.agents, filename=f'sys_state_{step_id}')
 
+                    #if step_id % 15 == 0:
+                    #    for source in all_agents.sources.values():
+                    #        source.move(env, all_agents.agents)
+
             # Update fitness of policies using reward information
             global_reward = all_agents.global_fitness()
             reward_history.append(global_reward)
@@ -224,7 +228,7 @@ def learn_with_difference_reward(env, parameters, all_agents):
                 # rd.update_rover_path(sensor_agent["AG{0}".format(rv_id)], rv_id, -1)
 
             for step_id in range(p["n_steps"]):
-                # Rover scans environment and constructs state vector
+                # Agent scans quadrants and build state vector
                 for agent in all_agents.agents.values():
                     # Get sensing of sources and other agents
                     a_it, s_it = all_agents.get_sensing_info(agent.id)
@@ -243,8 +247,13 @@ def learn_with_difference_reward(env, parameters, all_agents):
                     # update the agents' path if last generation
                     if gen == (p["generations"] - 1):
                         agent.update_path()
+
                 if gen == (p["generations"] - 1):
                     env.render(all_agents.sources, all_agents.agents, filename=f'sys_state_{step_id}')
+
+                    #if step_id % 15 == 0:
+                    #    for source in all_agents.sources.values():
+                    #        source.move(env, all_agents.agents)
 
             # Update fitness of policies using reward information
             system_performance = all_agents.global_fitness()
@@ -359,6 +368,10 @@ def learn_with_local_reward(env, parameters, all_agents):
                 if gen == (p["generations"] - 1):
                     env.render(all_agents.sources, all_agents.agents, filename=f'sys_state_{step_id}')
 
+                    #if step_id % 15 == 0:
+                    #    for source in all_agents.sources.values():
+                    #        source.move(env, all_agents.agents)
+
             # Update fitness of policies using reward information
             system_performance = all_agents.global_fitness()
             reward_history.append(system_performance)
@@ -369,8 +382,6 @@ def learn_with_local_reward(env, parameters, all_agents):
                 for agent in all_agents.agents.values():
                     all_agents_paths[agent.id] = agent.path
                 save_path_history(all_agents_paths, "AllAgentsPath_LocalReward.json")
-            #if gen == (p["generations"] - 1) or gen == 0:
-            #    env.render(all_agents.sources, all_agents.agents, filename=f'sys_state_{gen}')
 
             # Choose new parents and create new offspring population
             for agent in all_agents.agents.values():
