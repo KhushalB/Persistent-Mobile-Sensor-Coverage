@@ -233,11 +233,10 @@ class AllAgents:
                 vprime_source[info_type] = self.compute_agents_coverage(
                     source, info_type
                 )
-            #    c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
-            #                           source.info_strength[
-            #                               info_type]) * 100
-            # self.sources_coverage[source.id] = c_source
-            self.sources_coverage[source.id] = vprime_source
+                # c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
+                c_source[info_type] = (vprime_source[info_type] / source.info_strength[info_type]) * 100
+            self.sources_coverage[source.id] = c_source
+            #self.sources_coverage[source.id] = vprime_source
 
     def compute_source_coverage_only_agent_i(self, agent_id):
         """
@@ -254,10 +253,9 @@ class AllAgents:
                     source, info_type, agent_id
                 )
                 # c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
-                #                       source.info_strength[
-                #                           info_type]) * 100
-            # self.sources_coverage_only_me[source.id] = c_source
-            self.sources_coverage_only_me[source.id] = vprime_source
+                c_source[info_type] = ((vprime_source[info_type]) / source.info_strength[info_type]) * 100
+            self.sources_coverage_only_me[source.id] = c_source
+            #self.sources_coverage_only_me[source.id] = vprime_source
 
     def compute_source_coverage_without_agent_i(self, agent_id):
         """
@@ -276,11 +274,9 @@ class AllAgents:
                 vprime_source[info_type] = self.compute_agents_coverage(
                     source, info_type, agent_id
                 )
-                # c_source[info_type] = ((source.info_strength[info_type] - vprime_source[info_type]) /
-                #                       source.info_strength[
-                #                           info_type]) * 100
-            # self.sources_coverage_without_me[source.id] = c_source
-            self.sources_coverage_without_me[source.id] = vprime_source
+                c_source[info_type] = ((vprime_source[info_type]) / source.info_strength[info_type]) * 100
+            self.sources_coverage_without_me[source.id] = c_source
+            #self.sources_coverage_without_me[source.id] = vprime_source
 
     def compute_agents_coverage___(self, source_position, info_type, a, n, lamdba_w, lambda_n, agent_id=None):
         """
@@ -329,7 +325,7 @@ class AllAgents:
             # compute the coverage for only the agent whose id is given (for local reward calculation)
             agent = self.agents[agent_id]
             agent_position = agent.current_position
-            agent_i_coverage = - agent.info_efficiency[info_type] / np.log(
+            negloglikelihood = - np.log(
                 utils.likelihood(
                     source.position,
                     agent_position,
@@ -337,13 +333,16 @@ class AllAgents:
                     sigma=source.info_strength[info_type]
                 )
             )
+
+            #agent_i_coverage = agent.info_efficiency[info_type] * np.exp(-1 / negloglikelihood)
+            agent_i_coverage = agent.info_efficiency[info_type] * np.exp(-negloglikelihood)
             return agent_i_coverage
         elif self.type_reward == 'difference_reward' and agent_id is not None:
             # compute the coverage for the entire system excluding agent i (for system performance without agent i)
             for agent in self.agents.values():
                 if agent.id != agent_id:
                     agent_position = agent.current_position
-                    sum_coverage = sum_coverage - agent.info_efficiency[info_type] / np.log(
+                    negloglikelihood = - np.log(
                         utils.likelihood(
                             source.position,
                             agent_position,
@@ -351,12 +350,14 @@ class AllAgents:
                             sigma=source.info_strength[info_type]
                         )
                     )
+                    # sum_coverage = sum_coverage + agent.info_efficiency[info_type] * np.exp(-1 / negloglikelihood)
+                    sum_coverage = sum_coverage + agent.info_efficiency[info_type] * np.exp(-negloglikelihood)
             return sum_coverage
         else:
             # compute the coverage for the entire system (for global system performance)
             for agent in self.agents.values():
                 agent_position = agent.current_position
-                sum_coverage = sum_coverage - agent.info_efficiency[info_type] / np.log(
+                negloglikelihood = - np.log(
                     utils.likelihood(
                         source.position,
                         agent_position,
@@ -364,6 +365,8 @@ class AllAgents:
                         sigma=source.info_strength[info_type]
                     )
                 )
+                #sum_coverage = sum_coverage + agent.info_efficiency[info_type] * np.exp(-1 / negloglikelihood)
+                sum_coverage = sum_coverage + agent.info_efficiency[info_type] * np.exp(-negloglikelihood)
         return sum_coverage
 
     def global_fitness(self):
@@ -430,10 +433,9 @@ class AllAgents:
                             max_distance_to_other_agents[3] = distance_aj
             sensing_agents_quadrants[info_type] = np.divide(quadrants_agents, max_distance_to_other_agents)
 
-            max_distance_to_sources = np.zeros((1, 4)).ravel() + 0.01  # added to avoid division by zero
+            #max_distance_to_sources = np.zeros((1, 4)).ravel() + 0.01  # added to avoid division by zero
             target_agent_info_efficiency = target_agent.info_efficiency[info_type]
             for source in self.sources.values():
-                distance_ij = utils.euclidian_distance(source.position, target_agent.current_position) + 1
 
                 neglog_likelihood = - np.log(
                     utils.likelihood(
@@ -443,51 +445,28 @@ class AllAgents:
                         sigma=source.info_strength[info_type]
                     )
                 )
+                info_eff_times_exponential = target_agent_info_efficiency * np.exp(- 1 / neglog_likelihood)
 
                 # Quadrant 0
                 if source.position[0] < target_agent.current_position[0] and \
                         source.position[1] < target_agent.current_position[1]:
-                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
-                    quadrants_sources[0] = quadrants_sources[0] + current_src_update
-
-                    # Check if the value of the information type for agent i is greater than max
-                    if distance_ij > max_distance_to_sources[0]:
-                        max_distance_to_sources[0] = distance_ij
+                    quadrants_sources[0] = quadrants_sources[0] + info_eff_times_exponential
 
                 # Quadrant 1
                 elif source.position[0] >= target_agent.current_position[0] and \
                         source.position[1] < target_agent.current_position[1]:
-                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
-                    quadrants_sources[1] = quadrants_sources[1] + current_src_update
-
-                    # Check if the value of the information type for agent i is greater than max
-                    if distance_ij > max_distance_to_sources[1]:
-                        max_distance_to_sources[1] = distance_ij
+                    quadrants_sources[1] = quadrants_sources[1] + info_eff_times_exponential
 
                 # Quadrant 2
                 elif source.position[0] >= target_agent.current_position[0] and \
                         source.position[1] >= target_agent.current_position[1]:
-                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
-                    quadrants_sources[2] = quadrants_sources[2] + current_src_update
-
-                    # Check if the value of the information type for agent i is greater than max
-                    if distance_ij > max_distance_to_sources[2]:
-                        max_distance_to_sources[2] = distance_ij
+                    quadrants_sources[2] = quadrants_sources[2] + info_eff_times_exponential
 
                 # Quadrant 3
                 else:
-                    current_src_update = (target_agent_info_efficiency * distance_ij) / neglog_likelihood
-                    #current_src_update = target_agent_info_efficiency / neglog_likelihood
-                    quadrants_sources[3] = quadrants_sources[3] + current_src_update
+                    quadrants_sources[3] = quadrants_sources[3] + info_eff_times_exponential
 
-                    # Check if the value of the information type for agent i is greater than max
-                    if distance_ij > max_distance_to_sources[3]:
-                        max_distance_to_sources[3] = distance_ij
-
-            sensing_sources_quadrants[info_type] = np.divide(quadrants_sources, max_distance_to_sources)
+            sensing_sources_quadrants[info_type] = quadrants_sources
 
         return sensing_agents_quadrants, sensing_sources_quadrants
 

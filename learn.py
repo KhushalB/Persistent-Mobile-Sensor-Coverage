@@ -88,6 +88,9 @@ def learn_with_global_reward(env, parameters, all_agents):
                         angle_phi = get_angle_phi(env.boundaries, agent.current_position, best_quadrant)
                         agent.step(angle_phi, env, all_agents)
 
+                        #if agent.id == 0:
+                        #    print('q values:', agent.output_layer)
+
                 # Update fitness of policies using reward information
                 all_agents.compute_source_coverage()
                 #all_agents.compute_source_coverage(p["drop_a"], p["drop_n"], p["drop_lambda_w"], p["drop_lambda_n"])
@@ -120,9 +123,6 @@ def learn_with_global_reward(env, parameters, all_agents):
                     else:
                         best_quadrant = np.argmax(agent.output_layer)
                     angle_phi = get_angle_phi(env.boundaries, agent.current_position, best_quadrant)
-                    #print('Shape output layer:', agent.output_layer.shape)
-                    #print('output layer:', agent.output_layer)
-                    #print('best quadrant:', best_quadrant, 'angle:', angle_phi) #--------------------------------------
                     agent.step(angle_phi, env, all_agents)
 
                     # update the agents' path if last generation

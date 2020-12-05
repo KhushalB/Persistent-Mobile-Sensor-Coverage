@@ -20,8 +20,8 @@ def get_parameters():
     parameters["env_length"] = 100
     parameters["n_agents"] = 11
     parameters["n_sources"] = 5
-    parameters["step_size"] = 0.8
-    parameters["epsilon_greedy"] = 0.1
+    parameters["step_size"] = 1.2 # 0.8
+    parameters["epsilon_greedy"] = 0.15
 
     # Test Parameters
     parameters["s_runs"] = 1  # Number of statistical runs to perform
@@ -30,7 +30,7 @@ def get_parameters():
 
     # Neural Network Parameters
     parameters["n_inputs"] = 16
-    parameters["n_hnodes"] = 8
+    parameters["n_hnodes"] = 10
     parameters["n_outputs"] = 4
 
     # CCEA Parameters
@@ -42,7 +42,7 @@ def get_parameters():
     parameters["n_elites"] = 10
 
     # Training Parameters
-    parameters["n_steps"] = 60
+    parameters["n_steps"] = 50 # 60
 
     # Drop-off Parameters
     parameters["drop_a"] = -5
@@ -81,9 +81,9 @@ if __name__ == "__main__":
     # **************************************************************************************************************
     # ****** Change the type of reward in the line below to 0, 1 or 2 for global, difference and local fitness *****
     # **************************************************************************************************************
-    all_agents = AllAgents(object_size, type_reward=rewards[1])
+    all_agents = AllAgents(object_size, type_reward=rewards[0])
 
-    # Position the source withing the environment
+    # Position the source within the environment
     init_source_pos = [[5, 25], [15, 75], [65, 85], [50, 50], [80, 20]]
     for i in range(param["n_sources"]):
         info_strength = {'precipitation': 10, 'temperature': 20}
@@ -107,11 +107,11 @@ if __name__ == "__main__":
             info_efficiency = {'precipitation': 3, 'temperature': 5}
             x0 = np.random.uniform(
                 low=0.0 + (object_size["border_width"] + object_size["agent_radius"]),
-                high=param["env_width"] - (object_size["border_width"] + object_size["agent_radius"])
+                high=0.6 * param["env_width"] - (object_size["border_width"] + object_size["agent_radius"])
             )
             y0 = np.random.uniform(
                 low=0.0 + (object_size["border_width"] + object_size["agent_radius"]),
-                high=param["env_length"] - (object_size["border_width"] + object_size["agent_radius"])
+                high=0.6 * param["env_length"] - (object_size["border_width"] + object_size["agent_radius"])
             )
             # Check for appropriate random position for agents (out of obstacles)
             while not check_if_on_obstacle([x0, y0], obstacles) and not env.check_position([x0, y0]):
